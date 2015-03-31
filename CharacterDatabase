@@ -1,0 +1,38 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+[ExecuteInEditMode]
+/// <summary>
+///  Retrieves the character database
+/// </summary>
+public class CharacterDataBase : MonoBehaviour {
+
+    static CharacterDataBase[] mList;
+    static bool mIsDirty = true;
+
+    static public CharacterDataBase[] list
+    {
+        get
+        {
+            if (mIsDirty)
+            {
+                mIsDirty = false;
+                mList = NGUITools.FindActive<CharacterDataBase>();
+            }
+            return mList;
+        }
+    }
+
+    public int databaseID = 0;
+    public List<CharacterDataBase> character = new List<CharacterDataBase>();
+    void OnEnable() 
+    {
+        mIsDirty = true; 
+    }
+
+    void OnDisable() 
+    {
+        mIsDirty = true; 
+    }
+}
