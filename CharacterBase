@@ -1,0 +1,23 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+public class CharacterBase
+{
+    public enum job
+    {
+        Hobbyest, 
+        Singer, 
+        InstrumentPlayer, 
+
+    }
+
+    public int playerID;
+
+    public string name;
+   
+
+    public List<CharacterGenerator> Stats = new List<CharacterGenerator>();
+
+    public GameObject attachment;
+
+}
