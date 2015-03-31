@@ -1,0 +1,221 @@
+using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+public class CharacterFSM : MonoBehaviour
+{
+    // Creating a song Variables
+    public static int[] resource = new int[3];
+    public static int randResource;
+    float countDown = 5;
+    public static bool working = false;
+
+
+    //   GameObject[] waypoints;
+    // Variables for Pathing
+
+    float speed;
+    float speedMultiplier = 5;
+    //  private int rotationSpeed = 5;
+    bool onNode = true;
+    Vector3 m_target = new Vector3(0, 0, 0);
+    Vector3 currNode;
+    int nodeIndex;
+    List<Vector3> path = new List<Vector3>();
+    NodeControl control;
+
+    float oldTime = 0;
+    float checkTime = 0;
+    float elapsedTime = 0;
+    public bool DebugMode;
+
+    //
+    State state = State.Idle;
+
+
+    public enum State
+    {
+        Idle,
+        Initalize,
+        Moving,
+        Setup,
+        Create
+    }
+    void Awake()
+    {
+        GameObject scripts = GameObject.Find("Camera");
+        control = (NodeControl)scripts.GetComponent(typeof(NodeControl));
+    }
+
+    private State _state; // tracks state. 
+
+    // Use this for initialization
+    IEnumerator Start()
+    {
+        _state = State.Initalize;
+        speed = Time.deltaTime * speedMultiplier;
+        elapsedTime += Time.deltaTime;
+
+      
+            while (true)
+            { 
+                //if (elapsedTime > oldTime)
+                //    {
+
+                switch (_state)
+                {
+                    case State.Initalize:
+                        Init();
+                        break;
+                    case State.Moving:
+                        oldTime = elapsedTime + 0.01f;
+
+                        if (elapsedTime > checkTime)
+                        {
+                            checkTime = elapsedTime + 1;
+                            SetTarget();
+                        }
+
+                        if (path != null)
+                        {
+                            if (onNode)
+                            {
+                                onNode = false;
+                                if (nodeIndex < path.Count)
+                                    currNode = path[nodeIndex];
+                            }
+                            else
+                                MoveToward();
+                        }
+                        break;
+                    case State.Setup:
+                        Setup();
+                        break;
+                    case State.Create:
+                        CreateSong();
+                        break;
+                    case State.Idle:
+                        Idle();
+                        break;
+                }
+                yield return 0;
+            }
+        
+    }
+    private void Init()
+    {
+
+        _state = CharacterFSM.State.Setup;
+    }
+    private void Moving()
+    {
+        oldTime = elapsedTime + 0.01f;
+
+        if (elapsedTime > checkTime)
+        {
+            checkTime = elapsedTime + 1;
+            SetTarget();
+        }
+
+        if (path != null)
+        {
+            if (onNode)
+            {
+                onNode = false;
+                if (nodeIndex < path.Count)
+                    currNode = path[nodeIndex];
+            }
+            else
+                MoveToward();
+        }
+
+        _state = CharacterFSM.State.Create;
+    }
+
+    private void Setup()
+    {
+
+        _state = CharacterFSM.State.Moving;
+    }
+
+    void MoveToward()
+    {
+        if (DebugMode)
+        {
+            for (int i = 0; i < path.Count - 1; ++i)
+            {
+                Debug.DrawLine((Vector3)path[i], (Vector3)path[i + 1], Color.white, 0.01f);
+            }
+        }
+
+        Vector3 newPos = transform.position;
+
+        float Xdistance = newPos.x - currNode.x;
+        if (Xdistance < 0) Xdistance -= Xdistance * 2;
+        float Ydistance = newPos.z - currNode.z;
+        if (Ydistance < 0) Ydistance -= Ydistance * 2;
+
+        if ((Xdistance < 0.1 && Ydistance < 0.1) && m_target == currNode) //Reached target
+        {
+            _state = CharacterFSM.State.Idle;
+        }
+        else if (Xdistance < 0.1 && Ydistance < 0.1)
+        {
+            nodeIndex++;
+            onNode = true;
+        }
+
+        /***Move toward waypoint***/
+        Vector3 motion = currNode - newPos;
+        motion.Normalize();
+        newPos += motion * speed;
+
+        transform.position = newPos;
+    }
+
+    private void SetTarget()
+    {
+        path = control.Path(transform.position, m_target);
+        nodeIndex = 0;
+        onNode = true;
+    }
+
+    public void MoveOrder(Vector3 pos)
+    {
+        m_target = pos;
+        SetTarget();
+        _state = CharacterFSM.State.Moving;
+    }
+    private void CreateSong()
+    {
+        if (working == true && countDown <= 0)
+        {
+            CreateSo();
+
+        }
+        if (countDown >= 0)
+        {
+            Debug.Log("Count down" + countDown);
+            countDown -= Time.deltaTime;
+        }
+        _state = CharacterFSM.State.Idle;
+    }
+
+    private void CreateSo()
+    {
+        randResource = Random.Range(0, 3);
+        resource[randResource] = resource[randResource] + (Random.Range(0, 2));
+        countDown = 5;
+    }
+    private void Idle()
+    {
+
+        _state = State.Moving;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
+}
