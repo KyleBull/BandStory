@@ -1,0 +1,96 @@
+using UnityEngine;
+using System.Collections;
+
+public class MainMenu : MonoBehaviour
+{
+    public bool clearPrefs = false;
+
+    private string levelToLoad = "";
+    private string bandCreation = GameSetting.levelNames[1];
+    	private string startGame = GameSetting.levelNames[2];
+
+    private bool savedGame = false;
+    private float percentLoaded = 0;
+    private bool displayOptions = true;
+
+    // Use this for initialization
+    void Start()
+    {
+        if (clearPrefs)
+            PlayerPrefs.DeleteAll();
+        // to force players to update. lolol...kid of
+        if (PlayerPrefs.HasKey(GameSetting.VERSION_KEY_NAME))
+        {
+            Debug.Log("There is a ver key");
+            if (GameSetting.LoadGameVersion() != GameSetting.VERSION_NUMBER)
+            {
+                Debug.Log("Saved version is not the same as current version");
+                /* Upgrade playerprefs here */
+                levelToLoad = bandCreation;
+            }
+            else
+            {
+                Debug.Log("Saved version is the same as the current version");
+                if (PlayerPrefs.HasKey("Band Name: "))
+                {
+                    Debug.Log("There is a Player Name tag");
+                    if (PlayerPrefs.GetString("Band Name") == "")
+                    {
+                        // This should be replaced with a message box. 
+                        // Lear to do this.
+                        Debug.Log("The Player Name key does not have anything in it.");
+                        PlayerPrefs.DeleteAll();
+                        levelToLoad = bandCreation;
+                    }
+                    else
+                    {
+                        Debug.Log("The Player Name key has a value");
+                        savedGame = true;
+                        displayOptions = true;
+                        //						levelToLoad = firstLevel;
+                    }
+                }
+                else
+                {
+                    Debug.Log("There is no Player Name key");
+                    PlayerPrefs.DeleteAll();
+                    GameSetting.SaveGameVersion();
+                    levelToLoad = bandCreation;
+                }
+            }
+        }
+        else
+        {
+            Debug.Log("There is no ver key");
+            Debug.Log("Deleting Keys");
+            PlayerPrefs.DeleteAll();
+            Debug.Log("Saving ver");
+            GameSetting.SaveGameVersion();
+            levelToLoad = bandCreation;
+        }
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (levelToLoad == "")
+            return;
+
+        if (Application.GetStreamProgressForLevel(levelToLoad) == 1)
+        {
+            Debug.Log("Level Ready");
+            percentLoaded = 1;
+
+            if (Application.CanStreamedLevelBeLoaded(levelToLoad))
+            {
+                Debug.Log("Level can be streamed!");
+                Application.LoadLevel(levelToLoad);
+            }
+        }
+        else
+        {
+            percentLoaded = Application.GetStreamProgressForLevel(levelToLoad);
+        }
+    }
+}
